@@ -1,6 +1,7 @@
 import pygame as pg
 from settings import *
 from sprites import *
+from os import path
 import sys
 pg.init()
 
@@ -14,13 +15,25 @@ class Game:
         self.load_data()
         
     def load_data(self):
-        pass
+        game_folder = path.dirname(__file__)
+        self.map_data = []
+        with open(path.join(game_folder, "map.txt"), 'rt') as f:
+            for line in f:
+                self.map_data.append(line)
 
     def new(self):
         self.sprite_list = pg.sprite.Group()
         self.bullet_list = pg.sprite.Group()
-        self.player = Player(self, 50, 50)
-        self.sprite_list.add(self.player)
+        self.wall_list = pg.sprite.Group()
+        self.enemy_list = pg.sprite.Group()
+
+        for row, tiles in enumerate(self.map_data):
+            for col, tile in enumerate(tiles):
+                if tile == "w":
+                    wall = Wall(self, col*TILE_SIZE, row*TILE_SIZE)
+                if tile == "p":
+                    self.player = Player(self, col*TILE_SIZE, row*TILE_SIZE)
+
 
     def run(self):
         self.playing = True
@@ -36,12 +49,6 @@ class Game:
 
     def update(self):
         self.sprite_list.update()
-
-        #remove out of bounds bullets
-        for bullet in self.bullet_list:
-            if(bullet.x < 0 or bullet.y < 0 or bullet.x > WIDTH or bullet.y > HEIGHT):
-                self.sprite_list.remove(bullet)
-                self.bullet_list.remove(bullet)
 
     def draw(self):
         self.screen.fill(BG_COLOR)
@@ -69,9 +76,7 @@ class Game:
                     theta = -atan2(delta_y, delta_x)
 
                     ##create a bullet firing in the mouse direction
-                    bullet = Bullet(player_x, player_y, -theta)
-                    self.sprite_list.add(bullet)
-                    self.bullet_list.add(bullet)
+                    bullet = Bullet(self, player_x, player_y, -theta)
                 
     def show_start_screen(self):
         pass

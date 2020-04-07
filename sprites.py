@@ -1,10 +1,39 @@
 import pygame as pg
-from math import atan2, degrees, cos, sin
+from math import atan2, degrees, cos, sin, sqrt
 from settings import *
+from pygame import Vector2 as vec
+
+##returns true if the given circle and rectangle are collided
+def circle_rect_collided(c, r):
+    cx = c.x
+    cy = c.y
+    rx = r.rect.x
+    ry = r.rect.y
+    test_x = cx
+    test_y = cy
+
+    if (cx < rx):
+        test_x = rx
+    elif (cx > rx + r.rect.width):
+        test_x = rx + r.rect.width
+
+    if (cy < ry):
+        test_y = ry
+    elif (cy > ry + r.rect.height):
+        test_y = ry + r.rect.height
+
+    dist_x = cx - test_x
+    dist_y = cy - test_y
+    distance = sqrt(dist_x ** 2 + dist_y ** 2)
+    if (distance <= c.width / 2):
+        return True
+    else:
+        return False
 
 class Player(pg.sprite.Sprite):
     def __init__(self, game, x, y):
-        pg.sprite.Sprite.__init__(self)
+        self.groups = game.sprite_list
+        pg.sprite.Sprite.__init__(self, self.groups)
 
         self.x = x ##non int-deprecated position
         self.y = y
@@ -19,8 +48,16 @@ class Player(pg.sprite.Sprite):
         self.vx, self.vy = 0,0
 
     def move(self, vx, vy):
-        self.x += vx * self.game.dt
-        self.y += vy * self.game.dt
+        move_x = vx * self.game.dt
+        move_y = vy * self.game.dt
+        self.x += move_x
+        self.y += move_y
+
+        ##undo if results in a wall collision
+        if(self.wall_collision()):
+            self.x -= move_x
+            self.y -= move_y
+
         self.rect.x = int(self.x)
         self.rect.y = int(self.y)
 
@@ -43,31 +80,36 @@ class Player(pg.sprite.Sprite):
 
         self.rect.center = player_x, player_y
 
-    def draw_line(self, x, y):
-        center_x, center_y = self.rect.center
-        pg.draw.line(self.game.screen, WHITE, (center_x, center_y), (x, y))
+    def wall_collision(self):
+        b = False
+        for wall in self.game.wall_list:
+            if(circle_rect_collided(self, wall)):
+                b = True
+                break
+        return b
 
     def check_keys(self):
         self.vx, self.vy = 0, 0
         keys = pg.key.get_pressed()
         if keys[pg.K_a] or keys[pg.K_LEFT]:
-            self.vx = -PLAYER_SPEED
+            self.move(-PLAYER_SPEED, 0)
         if keys[pg.K_d] or keys[pg.K_RIGHT]:
-            self.vx = PLAYER_SPEED
+            self.move(PLAYER_SPEED, 0)
         if keys[pg.K_w] or keys[pg.K_UP]:
-            self.vy = -PLAYER_SPEED
+            self.move(0, -PLAYER_SPEED)
         if keys[pg.K_s] or keys[pg.K_DOWN]:
-            self.vy = PLAYER_SPEED
+            self.move(0, PLAYER_SPEED)
 
     def update(self):
         self.check_keys()
-        self.move(self.vx, self.vy)
         self.rotate()
 
 class Bullet(pg.sprite.Sprite):
-    def __init__(self, x, y, angle):
-        pg.sprite.Sprite.__init__(self)
+    def __init__(self, game, x, y, angle):
+        self.groups = game.bullet_list, game.sprite_list
+        pg.sprite.Sprite.__init__(self, self.groups)
 
+        self.game = game
         self.angle = angle
         self.image = pg.Surface([4, 4])
         self.image.fill(RED)
@@ -80,9 +122,54 @@ class Bullet(pg.sprite.Sprite):
         self.speed = [self.speed_magnitude * cos(self.angle),
                       self.speed_magnitude * sin(self.angle)]
 
+    def wall_collision(self):
+        if pg.sprite.spritecollideany(self, self.game.wall_list):
+            self.kill()
+
+    def out_of_bounds(self):
+        if(self.x < 0 or self.y < 0 or self.x > WIDTH or self.y > HEIGHT):
+            self.kill()
+
+
     def update(self):
-        ##update the stored position without int conversion
         self.x += self.speed[0]
         self.y += self.speed[1]
-        ##update the displayed position as an int(pixel) value
+
         self.rect.center = (int(self.x), int(self.y))
+
+        self.wall_collision()
+        self.out_of_bounds()
+
+class Wall(pg.sprite.Sprite):
+    def __init__(self, game, x, y):
+        self.groups = game.wall_list, game.sprite_list
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+
+        self.image = pg.Surface([TILE_SIZE, TILE_SIZE])
+        self.image.fill(LIGHT_GREY)
+        self.rect = self.image.get_rect()
+
+        self.rect.x = x
+        self.rect.y = y
+
+class Enemy(pg.sprite.Sprite):
+    def __init__(self, game, x, y):
+        self.groups = game.enemy_list, game.sprite_list
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+
+        self.image = pg.Surface([TILE_SIZE, TILE_SIZE])
+        self.image.fill(YELLOW)
+        self.rect = self.image.get_rect()
+
+        self.x = x
+        self.y = y
+        self.vel = vec(0,0)
+
+    def move(self):
+        for enemy in game.enemy_list:
+            if(enemy != self):
+                pass          ##TODO not done here
+
+
