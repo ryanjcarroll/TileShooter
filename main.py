@@ -31,8 +31,10 @@ class Game:
             for col, tile in enumerate(tiles):
                 if tile == "w":
                     wall = Wall(self, col*TILE_SIZE, row*TILE_SIZE)
-                if tile == "p":
+                elif tile == "p":
                     self.player = Player(self, col*TILE_SIZE, row*TILE_SIZE)
+                elif tile == "e":
+                    enemy = Enemy(self, col*TILE_SIZE, row*TILE_SIZE, 10)
 
 
     def run(self):

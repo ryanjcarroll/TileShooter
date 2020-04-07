@@ -1,12 +1,13 @@
 import pygame as pg
 from math import atan2, degrees, cos, sin, sqrt
 from settings import *
+import random
 from pygame import Vector2 as vec
 
 ##returns true if the given circle and rectangle are collided
 def circle_rect_collided(c, r):
-    cx = c.x
-    cy = c.y
+    cx = c.pos.x
+    cy = c.pos.y
     rx = r.rect.x
     ry = r.rect.y
     test_x = cx
@@ -35,34 +36,29 @@ class Player(pg.sprite.Sprite):
         self.groups = game.sprite_list
         pg.sprite.Sprite.__init__(self, self.groups)
 
-        self.x = x ##non int-deprecated position
-        self.y = y
+        self.pos = vec(x,y)
+        self.vel = vec(0,0)
 
         self.image = pg.image.load("images/circle.png")
         self.rect = self.image.get_rect()
         self.width = self.rect.width
         self.game = game
 
-        self.rect.x = int(self.x - self.rect.width / 2)
-        self.rect.y = int(self.y - self.rect.height / 2)
-        self.vx, self.vy = 0,0
+        self.rect.center = self.pos
 
     def move(self, vx, vy):
-        move_x = vx * self.game.dt
-        move_y = vy * self.game.dt
-        self.x += move_x
-        self.y += move_y
+        self.vel = vec(vx,vy)
+        self.pos += self.vel * self.game.dt
 
         ##undo if results in a wall collision
         if(self.wall_collision()):
-            self.x -= move_x
-            self.y -= move_y
+            self.pos -= self.vel * self.game.dt
 
-        self.rect.x = int(self.x)
-        self.rect.y = int(self.y)
+        self.rect.x = int(self.pos.x)
+        self.rect.y = int(self.pos.y)
 
     def rotate(self):
-        player_x, player_y = self.x, self.y
+        player_x, player_y = self.pos
         mouse_x, mouse_y = pg.mouse.get_pos()
 
         delta_x = mouse_x - player_x
@@ -89,7 +85,6 @@ class Player(pg.sprite.Sprite):
         return b
 
     def check_keys(self):
-        self.vx, self.vy = 0, 0
         keys = pg.key.get_pressed()
         if keys[pg.K_a] or keys[pg.K_LEFT]:
             self.move(-PLAYER_SPEED, 0)
@@ -104,6 +99,11 @@ class Player(pg.sprite.Sprite):
         self.check_keys()
         self.rotate()
 
+    def wait_random(self):
+        ##tester method for framerate variations
+        ran = random.randint(0,100)
+        pg.time.delay(ran)
+
 class Bullet(pg.sprite.Sprite):
     def __init__(self, game, x, y, angle):
         self.groups = game.bullet_list, game.sprite_list
@@ -116,27 +116,25 @@ class Bullet(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.speed_magnitude = BULLET_SPEED
 
-        self.x, self.y = x,y
-        self.rect.center = int(self.x), int(self.y)
+        self.pos = vec(x,y)
+        self.rect.center = self.pos
 
-        self.speed = [self.speed_magnitude * cos(self.angle),
-                      self.speed_magnitude * sin(self.angle)]
+        self.vel = vec(self.speed_magnitude * cos(self.angle),
+                      self.speed_magnitude * sin(self.angle))
+        self.vel.normalize()
+        self.vel *= BULLET_SPEED
 
     def wall_collision(self):
         if pg.sprite.spritecollideany(self, self.game.wall_list):
             self.kill()
 
     def out_of_bounds(self):
-        if(self.x < 0 or self.y < 0 or self.x > WIDTH or self.y > HEIGHT):
+        if(self.pos.x < 0 or self.pos.y < 0 or self.pos.x > WIDTH or self.pos.y > HEIGHT):
             self.kill()
 
-
     def update(self):
-        self.x += self.speed[0]
-        self.y += self.speed[1]
-
-        self.rect.center = (int(self.x), int(self.y))
-
+        self.pos += self.vel * self.game.dt
+        self.rect.center = self.pos
         self.wall_collision()
         self.out_of_bounds()
 
@@ -150,11 +148,11 @@ class Wall(pg.sprite.Sprite):
         self.image.fill(LIGHT_GREY)
         self.rect = self.image.get_rect()
 
-        self.rect.x = x
-        self.rect.y = y
+        self.pos = vec(x + TILE_SIZE/2, y + TILE_SIZE/2)
+        self.rect.center = self.pos
 
 class Enemy(pg.sprite.Sprite):
-    def __init__(self, game, x, y):
+    def __init__(self, game, x, y, hp):
         self.groups = game.enemy_list, game.sprite_list
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
@@ -163,13 +161,70 @@ class Enemy(pg.sprite.Sprite):
         self.image.fill(YELLOW)
         self.rect = self.image.get_rect()
 
-        self.x = x
-        self.y = y
+        self.pos = vec(x,y)
         self.vel = vec(0,0)
 
+        self.avoid_wall = vec(0,0)
+        self.avoid_enemy = vec(0,0)
+        self.hp = hp
+        self.chase = False
+
     def move(self):
-        for enemy in game.enemy_list:
+        vec_to_player = self.game.player.pos - self.pos
+
+        if(vec_to_player.length() > 0):
+            self.vel = vec_to_player.normalize()
+
+        self.vel += self.avoid_walls() * AVOID_WALLS_WEIGHT
+        self.vel += self.avoid_enemies() * AVOID_ENEMIES_WEIGHT
+
+        self.vel = self.vel.normalize() * ENEMY_SPEED
+        self.pos += self.vel * self.game.dt
+
+        if(self.wall_collision()):
+            self.pos += -self.vel * self.game.dt
+
+    def wall_collision(self):
+        for wall in self.game.wall_list:
+            if pg.sprite.collide_rect(self, wall):
+                return True
+                break
+        return False
+
+    def avoid_walls(self):
+        avoid_wall = vec(0,0)
+        for wall in self.game.wall_list:
+            to_wall = self.pos - wall.pos
+            if 0 < to_wall.length() < AVOID_WALLS_RADIUS:
+                avoid_wall += (to_wall.normalize() * (AVOID_WALLS_RADIUS - to_wall.length()))
+        return avoid_wall
+
+    def avoid_enemies(self):
+        avoid_enemy = vec(0,0)
+        for enemy in self.game.enemy_list:
             if(enemy != self):
-                pass          ##TODO not done here
+                to_enemy = enemy.pos - self.pos
+                if 0 < to_enemy.length() < AVOID_ENEMIES_RADIUS:
+                    avoid_enemy += (to_enemy.normalize() * (AVOID_ENEMIES_RADIUS - to_enemy.length()**2))
+        return avoid_enemy
 
+    def hit(self):
+        for bullet in self.game.bullet_list:
+            if pg.sprite.collide_rect(self, bullet):
+                if(self.chase == False):
+                    self.chase = True
+                bullet.kill()
+                self.hp -= 1
+                if(self.hp < 3):
+                    self.image.fill(RED)
+                    if(self.hp < 1):
+                        self.kill()
 
+    def update(self):
+        if (self.game.player.pos - self.pos).length() < 256:
+            self.chase = True
+        if(self.chase):
+            self.move()
+
+        self.hit()
+        self.rect.center = self.pos
