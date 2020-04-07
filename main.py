@@ -18,12 +18,9 @@ class Game:
 
     def new(self):
         self.sprite_list = pg.sprite.Group()
-        ##self.wall_list = pg.sprite.Group()
-        self.player = Player(self, 0, 0)
+        self.bullet_list = pg.sprite.Group()
+        self.player = Player(self, 50, 50)
         self.sprite_list.add(self.player)
-        ##for x in range(10,20):
-            ##Wall(self, x, 5)
-        ##   pass
 
     def run(self):
         self.playing = True
@@ -39,6 +36,12 @@ class Game:
 
     def update(self):
         self.sprite_list.update()
+
+        #remove out of bounds bullets
+        for bullet in self.bullet_list:
+            if(bullet.x < 0 or bullet.y < 0 or bullet.x > WIDTH or bullet.y > HEIGHT):
+                self.sprite_list.remove(bullet)
+                self.bullet_list.remove(bullet)
 
     def draw(self):
         self.screen.fill(BG_COLOR)
@@ -56,6 +59,19 @@ class Game:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.quit()
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                if (event.button == 1):
+                    player_x, player_y = self.player.rect.center
+                    mouse_x, mouse_y = pg.mouse.get_pos()
+
+                    delta_x = mouse_x - player_x
+                    delta_y = mouse_y - player_y
+                    theta = -atan2(delta_y, delta_x)
+
+                    ##create a bullet firing in the mouse direction
+                    bullet = Bullet(player_x, player_y, -theta)
+                    self.sprite_list.add(bullet)
+                    self.bullet_list.add(bullet)
                 
     def show_start_screen(self):
         pass

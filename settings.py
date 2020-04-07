@@ -20,3 +20,4 @@ FPS = 60
 
 ## player settings
 PLAYER_SPEED = 200
+BULLET_SPEED = 10

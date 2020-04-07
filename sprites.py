@@ -1,5 +1,5 @@
 import pygame as pg
-from math import atan2, degrees
+from math import atan2, degrees, cos, sin
 from settings import *
 
 class Player(pg.sprite.Sprite):
@@ -63,3 +63,26 @@ class Player(pg.sprite.Sprite):
         self.check_keys()
         self.move(self.vx, self.vy)
         self.rotate()
+
+class Bullet(pg.sprite.Sprite):
+    def __init__(self, x, y, angle):
+        pg.sprite.Sprite.__init__(self)
+
+        self.angle = angle
+        self.image = pg.Surface([4, 4])
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+        self.speed_magnitude = BULLET_SPEED
+
+        self.x, self.y = x,y
+        self.rect.center = int(self.x), int(self.y)
+
+        self.speed = [self.speed_magnitude * cos(self.angle),
+                      self.speed_magnitude * sin(self.angle)]
+
+    def update(self):
+        ##update the stored position without int conversion
+        self.x += self.speed[0]
+        self.y += self.speed[1]
+        ##update the displayed position as an int(pixel) value
+        self.rect.center = (int(self.x), int(self.y))
