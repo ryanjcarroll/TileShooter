@@ -39,7 +39,8 @@ class Player(pg.sprite.Sprite):
         self.pos = vec(x,y)
         self.vel = vec(0,0)
 
-        self.image = pg.image.load("images/circle.png")
+        self.game = game
+        self.image = self.game.player_img
         self.rect = self.image.get_rect()
         self.width = self.rect.width
         self.game = game
@@ -67,7 +68,7 @@ class Player(pg.sprite.Sprite):
 
         deg = degrees(angle)
 
-        new_image = pg.image.load("images/circle.png")
+        new_image = self.game.player_img
         rotated_image = pg.transform.rotate(new_image, deg)
         new_rect = rotated_image.get_rect()
 
@@ -157,71 +158,73 @@ class Enemy(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
 
-        self.image = pg.Surface([TILE_SIZE, TILE_SIZE])
-        self.image.fill(YELLOW)
+        self.image = self.game.enemy_img
         self.rect = self.image.get_rect()
+        self.width = self.rect.width
 
         self.pos = vec(x,y)
         self.vel = vec(0,0)
+        self.acc = vec(0,0)
 
         self.avoid_wall = vec(0,0)
         self.avoid_enemy = vec(0,0)
         self.hp = hp
         self.chase = False
+        self.rot = 0
+        self.speed = ENEMY_SPEED
 
     def move(self):
-        vec_to_player = self.game.player.pos - self.pos
+        old_pos = self.pos
+        self.rot = (self.game.player.pos - self.pos).angle_to(vec(1,0))
+        self.image = pg.transform.rotate(self.game.enemy_img, self.rot)
+        self.rect = self.image.get_rect()
+        self.rect.center = self.pos
 
-        if(vec_to_player.length() > 0):
-            self.vel = vec_to_player.normalize()
-
-        self.vel += self.avoid_walls() * AVOID_WALLS_WEIGHT
-        self.vel += self.avoid_enemies() * AVOID_ENEMIES_WEIGHT
-
-        self.vel = self.vel.normalize() * ENEMY_SPEED
-        self.pos += self.vel * self.game.dt
+        self.acc = vec(1, 0).rotate(-self.rot)
+        self.avoid_enemies()
+        self.avoid_walls()
+        self.acc.scale_to_length(self.speed)
+        self.acc -= 2*self.vel
+        self.vel += self.acc * self.game.dt
+        self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
 
         if(self.wall_collision()):
-            self.pos += -self.vel * self.game.dt
+            self.pos = old_pos
+            self.vel = -WALL_BOUNCE * self.vel
 
     def wall_collision(self):
         for wall in self.game.wall_list:
-            if pg.sprite.collide_rect(self, wall):
+            if circle_rect_collided(self, wall):
                 return True
                 break
         return False
 
     def avoid_walls(self):
-        avoid_wall = vec(0,0)
         for wall in self.game.wall_list:
             to_wall = self.pos - wall.pos
             if 0 < to_wall.length() < AVOID_WALLS_RADIUS:
-                avoid_wall += (to_wall.normalize() * (AVOID_WALLS_RADIUS - to_wall.length()))
-        return avoid_wall
+                self.acc += to_wall.normalize() * AVOID_WALLS_WEIGHT
 
     def avoid_enemies(self):
-        avoid_enemy = vec(0,0)
         for enemy in self.game.enemy_list:
             if(enemy != self):
-                to_enemy = enemy.pos - self.pos
+                to_enemy = self.pos - enemy.pos
                 if 0 < to_enemy.length() < AVOID_ENEMIES_RADIUS:
-                    avoid_enemy += (to_enemy.normalize() * (AVOID_ENEMIES_RADIUS - to_enemy.length()**2))
-        return avoid_enemy
+                    self.acc += to_enemy.normalize() * AVOID_ENEMIES_WEIGHT
 
     def hit(self):
         for bullet in self.game.bullet_list:
             if pg.sprite.collide_rect(self, bullet):
+                self.vel += bullet.vel * KNOCKBACK
                 if(self.chase == False):
                     self.chase = True
                 bullet.kill()
                 self.hp -= 1
-                if(self.hp < 3):
-                    self.image.fill(RED)
-                    if(self.hp < 1):
-                        self.kill()
+                if(self.hp < 1):
+                    self.kill()
 
     def update(self):
-        if (self.game.player.pos - self.pos).length() < 256:
+        if (self.game.player.pos - self.pos).length() < AGGRO_RADIUS:
             self.chase = True
         if(self.chase):
             self.move()

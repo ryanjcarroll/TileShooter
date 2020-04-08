@@ -21,6 +21,9 @@ class Game:
             for line in f:
                 self.map_data.append(line)
 
+        self.player_img = pg.image.load("images/circle.png")
+        self.enemy_img  = pg.image.load("images/enemy.png")
+
     def new(self):
         self.sprite_list = pg.sprite.Group()
         self.bullet_list = pg.sprite.Group()
@@ -34,8 +37,7 @@ class Game:
                 elif tile == "p":
                     self.player = Player(self, col*TILE_SIZE, row*TILE_SIZE)
                 elif tile == "e":
-                    enemy = Enemy(self, col*TILE_SIZE, row*TILE_SIZE, 10)
-
+                    enemy = Enemy(self, col*TILE_SIZE, row*TILE_SIZE, ENEMY_HP)
 
     def run(self):
         self.playing = True
