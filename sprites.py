@@ -116,8 +116,10 @@ class Bullet(pg.sprite.Sprite):
         self.image.fill(RED)
         self.rect = self.image.get_rect()
         self.speed_magnitude = BULLET_SPEED
+        self.damage = BULLET_DAMAGE
 
         self.pos = vec(x,y)
+        self.orig_pos = vec(x,y)
         self.rect.center = self.pos
 
         self.vel = vec(self.speed_magnitude * cos(self.angle),
@@ -131,6 +133,8 @@ class Bullet(pg.sprite.Sprite):
 
     def out_of_bounds(self):
         if(self.pos.x < 0 or self.pos.y < 0 or self.pos.x > WIDTH or self.pos.y > HEIGHT):
+            self.kill()
+        if (self.pos - self.orig_pos).length() > BULLET_RANGE:
             self.kill()
 
     def update(self):
@@ -158,7 +162,8 @@ class Enemy(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
 
-        self.image = self.game.enemy_img
+        self.rot = random.randint(0,360)
+        self.image = pg.transform.rotate(self.game.enemy_img, self.rot)
         self.rect = self.image.get_rect()
         self.width = self.rect.width
 
@@ -169,8 +174,7 @@ class Enemy(pg.sprite.Sprite):
         self.avoid_wall = vec(0,0)
         self.avoid_enemy = vec(0,0)
         self.hp = hp
-        self.chase = False
-        self.rot = 0
+        self.chase = True
         self.speed = ENEMY_SPEED
 
     def move(self):
@@ -189,7 +193,6 @@ class Enemy(pg.sprite.Sprite):
         self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
 
         if(self.wall_collision()):
-            self.pos = old_pos
             self.vel = -WALL_BOUNCE * self.vel
 
     def wall_collision(self):
@@ -219,7 +222,7 @@ class Enemy(pg.sprite.Sprite):
                 if(self.chase == False):
                     self.chase = True
                 bullet.kill()
-                self.hp -= 1
+                self.hp -= bullet.damage
                 if(self.hp < 1):
                     self.kill()
 
