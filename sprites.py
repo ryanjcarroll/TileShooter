@@ -31,6 +31,30 @@ def circle_rect_collided(c, r):
     else:
         return False
 
+def collide_hit_rect(one, two):
+    return one.hitbox.colliderect(two.rect)
+
+def wall_collide(sprite, group, dir):
+    if dir == 'x':
+        walls_hit = pg.sprite.spritecollide(sprite, group, False, collide_hit_rect)
+        if walls_hit:
+            if walls_hit[0].rect.centerx > sprite.hitbox.centerx:
+                sprite.pos.x = walls_hit[0].rect.left - sprite.hitbox.width / 2
+            if walls_hit[0].rect.centerx < sprite.hitbox.centerx:
+                sprite.pos.x = walls_hit[0].rect.right + sprite.hitbox.width / 2
+            sprite.vel.x = 0
+            sprite.hitbox.centerx = sprite.pos.x
+
+    if dir == 'y':
+        walls_hit = pg.sprite.spritecollide(sprite, group, False, collide_hit_rect)
+        if walls_hit:
+            if walls_hit[0].rect.centery > sprite.hitbox.centery:
+                sprite.pos.y = walls_hit[0].rect.top - sprite.hitbox.height / 2
+            if walls_hit[0].rect.centery < sprite.hitbox.centery:
+                sprite.pos.y = walls_hit[0].rect.bottom + sprite.hitbox.height / 2
+            sprite.vel.y = 0
+            sprite.hitbox.centery = sprite.pos.y
+
 class Player(pg.sprite.Sprite):
     def __init__(self, game, x, y):
         self.groups = game.sprite_list
@@ -42,21 +66,27 @@ class Player(pg.sprite.Sprite):
         self.game = game
         self.image = self.game.player_img
         self.rect = self.image.get_rect()
+        self.hitbox = PLAYER_HITBOX
         self.width = self.rect.width
         self.game = game
 
         self.rect.center = self.pos
+        self.hitbox.center = self.pos
 
     def move(self, vx, vy):
         self.vel = vec(vx,vy)
+        self.rect.center = self.pos
         self.pos += self.vel * self.game.dt
 
         ##undo if results in a wall collision
         if(self.wall_collision()):
             self.pos -= self.vel * self.game.dt
 
-        self.rect.x = int(self.pos.x)
-        self.rect.y = int(self.pos.y)
+        self.hitbox.centerx = self.pos.x
+        wall_collide(self, self.game.wall_list, 'x')
+        self.hitbox.centery = self.pos.y
+        wall_collide(self, self.game.wall_list, 'y')
+        self.rect.center = self.hitbox.center
 
     def rotate(self):
         player_x, player_y = self.pos
@@ -75,7 +105,8 @@ class Player(pg.sprite.Sprite):
         self.image = rotated_image
         self.rect = new_rect
 
-        self.rect.center = player_x, player_y
+        self.rect.center = self.pos
+        self.hitbox.center = self.pos
 
     def wall_collision(self):
         b = False
@@ -165,16 +196,19 @@ class Enemy(pg.sprite.Sprite):
         self.rot = random.randint(0,360)
         self.image = pg.transform.rotate(self.game.enemy_img, self.rot)
         self.rect = self.image.get_rect()
+        self.hitbox = ENEMY_HITBOX
         self.width = self.rect.width
 
         self.pos = vec(x,y)
         self.vel = vec(0,0)
         self.acc = vec(0,0)
+        self.rect.center = self.pos
+        self.hitbox.center = self.pos
 
         self.avoid_wall = vec(0,0)
         self.avoid_enemy = vec(0,0)
         self.hp = hp
-        self.chase = True
+        self.chase = False
         self.speed = ENEMY_SPEED
 
     def move(self):
@@ -187,20 +221,17 @@ class Enemy(pg.sprite.Sprite):
         self.acc = vec(1, 0).rotate(-self.rot)
         self.avoid_enemies()
         self.avoid_walls()
-        self.acc.scale_to_length(self.speed)
+        if self.acc.length() > 0:
+            self.acc.scale_to_length(self.speed)
         self.acc -= 2*self.vel
         self.vel += self.acc * self.game.dt
         self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
 
-        if(self.wall_collision()):
-            self.vel = -WALL_BOUNCE * self.vel
-
-    def wall_collision(self):
-        for wall in self.game.wall_list:
-            if circle_rect_collided(self, wall):
-                return True
-                break
-        return False
+        self.hitbox.centerx = self.pos.x
+        wall_collide(self, self.game.wall_list, 'x')
+        self.hitbox.centery = self.pos.y
+        wall_collide(self, self.game.wall_list, 'y')
+        self.rect.center = self.hitbox.center
 
     def avoid_walls(self):
         for wall in self.game.wall_list:
