@@ -144,7 +144,7 @@ class Player(pg.sprite.Sprite):
                 self.pos -= self.vel * self.game.dt
 
             if (self.hit_count % 6 < 3):
-                self.image = pg.transform.rotate(self.game.empty_player_img, self.rot)
+                self.image = pg.transform.rotate(self.game.empty_player_img, degrees(self.rot))
                 self.rect = self.image.get_rect()
                 self.rect.center = self.pos
                 self.hitbox.center = self.pos
@@ -153,11 +153,11 @@ class Player(pg.sprite.Sprite):
             self.hitbox.center = self.pos
         elif self.hit_count < (PLAYER_HIT_TIME + PLAYER_RESPAWN_TIME):
             self.hit_count += 1
-            
+
             self.check_keys()
             self.rotate()
             if (self.hit_count % 6 < 3):
-                self.image = pg.transform.rotate(self.game.empty_player_img, self.rot)
+                self.image = pg.transform.rotate(self.game.empty_player_img, degrees(self.rot))
                 self.rect = self.image.get_rect()
                 self.rect.center = self.pos
                 self.hitbox.center = self.pos
