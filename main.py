@@ -19,13 +19,13 @@ class Game:
         game_folder = path.dirname(__file__)
         map_folder = path.join(game_folder, "maps")
         img_folder = path.join(game_folder, "images")
-        self.map = Map(path.join(map_folder, "map3.txt"))
+        self.map = Map(path.join(map_folder, "map2.txt"))
 
-        self.player_img = pg.image.load("images/player.png")
-        self.empty_player_img = pg.image.load("images/player_transparent.png")
-        self.enemy_img  = pg.image.load("images/enemy.png")
-        self.wall_img = pg.image.load("images/wall.png")
-        self.floor_img = pg.image.load("images/floor.png")
+        self.player_img = pg.image.load(path.join(img_folder, "player.png"))
+        self.empty_player_img = pg.image.load(path.join(img_folder, "player_transparent.png"))
+        self.enemy_img  = pg.image.load(path.join(img_folder, "enemy.png"))
+        self.wall_img = pg.image.load(path.join(img_folder, "wall.png"))
+        self.floor_img = pg.image.load(path.join(img_folder, "floor.png"))
 
     def new(self):
         self.sprite_list = pg.sprite.LayeredUpdates()
@@ -62,16 +62,16 @@ class Game:
 
     def draw(self):
         self.screen.fill(BG_COLOR)
-        self.draw_grid()
+        #self.draw_grid()
         for sprite in self.sprite_list:
             self.screen.blit(sprite.image, self.camera.apply(sprite))
         pg.display.flip()
 
     def draw_grid(self):
         for x in range(0, WIDTH, TILE_SIZE):
-            pg.draw.line(self.screen, LIGHT_GREY, (x,0), (x,HEIGHT))
+            pg.draw.line(self.screen, LIGHT_GREY, (x, 0), (x, HEIGHT))
         for y in range(0, HEIGHT, TILE_SIZE):
-            pg.draw.line(self.screen, LIGHT_GREY, (0,y), (WIDTH, y))
+            pg.draw.line(self.screen, LIGHT_GREY, (0, y), (WIDTH, y))
             
     def events(self):
         for event in pg.event.get():

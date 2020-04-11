@@ -91,14 +91,26 @@ class Player(pg.sprite.Sprite):
 
     def check_keys(self):
         keys = pg.key.get_pressed()
+        vel = PLAYER_SPEED
+        if keys[pg.K_LSHIFT]:
+            vel /= 4
+        vx,vy = 0, 0
+
         if keys[pg.K_a] or keys[pg.K_LEFT]:
-            self.move(-PLAYER_SPEED, 0)
+            vx = -vel
         if keys[pg.K_d] or keys[pg.K_RIGHT]:
-            self.move(PLAYER_SPEED, 0)
+            vx = vel
         if keys[pg.K_w] or keys[pg.K_UP]:
-            self.move(0, -PLAYER_SPEED)
+            vy = -vel
         if keys[pg.K_s] or keys[pg.K_DOWN]:
-            self.move(0, PLAYER_SPEED)
+            vy = vel
+
+        if (abs(vx) > 0 and abs(vy) > 0):
+            self.move(sqrt(2)*vx/2, 0)
+            self.move(0, sqrt(2)*vy/2)
+        else:
+            self.move(vx, 0)
+            self.move(0, vy)
 
     def update(self):
         if not self.hit:
@@ -112,6 +124,8 @@ class Player(pg.sprite.Sprite):
         for enemy in self.game.enemy_list:
             if circle_rect_collided(enemy, self.hitbox, -15):
                 self.hit = True
+                self.hp -= enemy.damage
+                print(self.hp)
                 self.hit_vel = enemy.vel
                 enemy.vel = -enemy.vel
 
@@ -139,7 +153,7 @@ class Player(pg.sprite.Sprite):
             self.hitbox.center = self.pos
         elif self.hit_count < (PLAYER_HIT_TIME + PLAYER_RESPAWN_TIME):
             self.hit_count += 1
-
+            
             self.check_keys()
             self.rotate()
             if (self.hit_count % 6 < 3):
@@ -157,8 +171,6 @@ class Player(pg.sprite.Sprite):
         bullet_x = self.pos.x + 10 * cos(angle + 0.55)
         bullet_y = self.pos.y + 10 * sin(angle + 0.55)
         bullet = Bullet(self.game, bullet_x, bullet_y, angle)
-
-
 
 class Bullet(pg.sprite.Sprite):
     def __init__(self, game, x, y, angle):
@@ -247,6 +259,7 @@ class Enemy(pg.sprite.Sprite):
         self.chase = False
         self.speed = ENEMY_SPEED
 
+        self.damage = ENEMY_DAMAGE
         self.hitbox = ENEMY_HITBOX
         self.hitbox.center = self.pos
 
