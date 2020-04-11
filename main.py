@@ -1,6 +1,7 @@
 import pygame as pg
 from settings import *
 from sprites import *
+from map import *
 from os import path
 import sys
 pg.init()
@@ -16,10 +17,9 @@ class Game:
         
     def load_data(self):
         game_folder = path.dirname(__file__)
-        self.map_data = []
-        with open(path.join(game_folder, "map.txt"), 'rt') as f:
-            for line in f:
-                self.map_data.append(line)
+        map_folder = path.join(game_folder, "maps")
+        img_folder = path.join(game_folder, "images")
+        self.map = Map(path.join(map_folder, "map3.txt"))
 
         self.player_img = pg.image.load("images/player.png")
         self.empty_player_img = pg.image.load("images/player_transparent.png")
@@ -33,7 +33,7 @@ class Game:
         self.wall_list = pg.sprite.Group()
         self.enemy_list = pg.sprite.Group()
 
-        for row, tiles in enumerate(self.map_data):
+        for row, tiles in enumerate(self.map.data):
             for col, tile in enumerate(tiles):
                 if tile == "w":
                     wall = Wall(self, col*TILE_SIZE, row*TILE_SIZE)
@@ -41,6 +41,8 @@ class Game:
                     self.player = Player(self, col*TILE_SIZE, row*TILE_SIZE)
                 elif tile == "e":
                     enemy = Enemy(self, col*TILE_SIZE, row*TILE_SIZE, ENEMY_HP)
+
+        self.camera = Camera(self.map.width, self.map.height)
 
     def run(self):
         self.playing = True
@@ -56,11 +58,13 @@ class Game:
 
     def update(self):
         self.sprite_list.update()
+        self.camera.update(self.player)
 
     def draw(self):
         self.screen.fill(BG_COLOR)
         self.draw_grid()
-        self.sprite_list.draw(self.screen)
+        for sprite in self.sprite_list:
+            self.screen.blit(sprite.image, self.camera.apply(sprite))
         pg.display.flip()
 
     def draw_grid(self):
@@ -75,17 +79,7 @@ class Game:
                 self.quit()
             elif event.type == pg.MOUSEBUTTONDOWN:
                 if (event.button == 1):
-                    player_x, player_y = self.player.rect.center
-                    mouse_x, mouse_y = pg.mouse.get_pos()
-
-                    delta_x = mouse_x - player_x
-                    delta_y = mouse_y - player_y
-                    theta = atan2(delta_y, delta_x)
-
-                    ##create a bullet firing in the mouse direction
-                    bullet_x = player_x + 10*cos(theta + 0.55)
-                    bullet_y = player_y + 10*sin(theta + 0.55)
-                    bullet = Bullet(self, bullet_x, bullet_y, theta - .01)
+                    self.player.shoot()
                 
     def show_start_screen(self):
         pass
