@@ -1,4 +1,4 @@
-import pygame as pg
+from pygame import Rect
 
 ##colors (RGB)
 WHITE = (255, 255, 255)
@@ -22,18 +22,28 @@ FPS = 60
 
 ## player settings
 PLAYER_SPEED = 200
-PLAYER_HITBOX = pg.Rect(0,0,35,35)
+PLAYER_HITBOX = Rect(0,0,15,15)
 BULLET_SPEED = 32
 BULLET_RANGE = 512
 BULLET_DAMAGE = 10
-KNOCKBACK = 0.1
+KNOCKBACK = 0.01
+PLAYER_HP = 5
+PLAYER_HIT_TIME= 60 ##hit animation length, in frames
+PLAYER_RESPAWN_TIME = 60 ##invincibility after death, in frames
 
 ##enemy settings
-ENEMY_SPEED = 200
-ENEMY_HITBOX = pg.Rect(0,0,35,35)
+ENEMY_SPEED = 400
 ENEMY_HP = 100
+ENEMY_HITBOX = Rect(0,0,15,15)
 AVOID_WALLS_RADIUS = 48
 AVOID_WALLS_WEIGHT = 1.5
 AVOID_ENEMIES_RADIUS = 48
 AVOID_ENEMIES_WEIGHT = 1
-AGGRO_RADIUS = 500
+AGGRO_RADIUS = 600
+WALL_BOUNCE = 0.5
+
+##layer settings
+PLAYER_LAYER = 2
+ENEMY_LAYER = 3
+WALL_LAYER = 1
+BULLET_LAYER = 4

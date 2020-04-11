@@ -21,11 +21,14 @@ class Game:
             for line in f:
                 self.map_data.append(line)
 
-        self.player_img = pg.image.load("images/circle.png")
+        self.player_img = pg.image.load("images/player.png")
+        self.empty_player_img = pg.image.load("images/player_transparent.png")
         self.enemy_img  = pg.image.load("images/enemy.png")
+        self.wall_img = pg.image.load("images/wall.png")
+        self.floor_img = pg.image.load("images/floor.png")
 
     def new(self):
-        self.sprite_list = pg.sprite.Group()
+        self.sprite_list = pg.sprite.LayeredUpdates()
         self.bullet_list = pg.sprite.Group()
         self.wall_list = pg.sprite.Group()
         self.enemy_list = pg.sprite.Group()
@@ -77,10 +80,12 @@ class Game:
 
                     delta_x = mouse_x - player_x
                     delta_y = mouse_y - player_y
-                    theta = -atan2(delta_y, delta_x)
+                    theta = atan2(delta_y, delta_x)
 
                     ##create a bullet firing in the mouse direction
-                    bullet = Bullet(self, player_x, player_y, -theta)
+                    bullet_x = player_x + 10*cos(theta + 0.55)
+                    bullet_y = player_y + 10*sin(theta + 0.55)
+                    bullet = Bullet(self, bullet_x, bullet_y, theta - .01)
                 
     def show_start_screen(self):
         pass
