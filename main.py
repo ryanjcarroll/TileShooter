@@ -80,6 +80,8 @@ class Game:
                 sprite.draw_health()
             if isinstance(sprite, Player):
                 sprite.draw_health()
+            if isinstance(sprite, Enemy):
+                sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply(sprite))
         pg.display.flip()
 

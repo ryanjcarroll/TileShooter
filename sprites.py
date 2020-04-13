@@ -349,6 +349,24 @@ class Enemy(pg.sprite.Sprite):
                 if(self.hp < 1):
                     self.kill()
 
+    def draw_health(self):
+        if (self.hp > ENEMY_HP * 0.6):
+            color = GREEN
+        elif self.hp > ENEMY_HP * 0.3:
+            color = YELLOW
+        else:
+            color = RED
+
+        width = int(self.width * self.hp / ENEMY_HP)
+        self.health_bar = pg.Rect(0, 0, width, 7)
+        self.health_bar.centerx, self.health_bar.centery = self.pos[0], self.pos[
+            1] - self.rect.height/2
+        self.health_bar.centerx += self.game.camera.x
+        self.health_bar.centery += self.game.camera.y
+
+        if self.hp < ENEMY_HP:
+            pg.draw.rect(self.game.screen, color, self.health_bar)
+
     def update(self):
         if(self.wait_count < ENEMY_WAIT):
             self.image = pg.transform.rotate(self.animation[self.animation_count], self.rot)
