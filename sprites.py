@@ -342,6 +342,7 @@ class Enemy(pg.sprite.Sprite):
                 self.vel += bullet.vel * KNOCKBACK
                 if(self.chase == False):
                     self.chase = True
+                    self.wait_count = ENEMY_WAIT
                     self.animation = self.game.enemy_move
                 bullet.kill()
                 self.hp -= bullet.damage
@@ -352,9 +353,10 @@ class Enemy(pg.sprite.Sprite):
         if(self.wait_count < ENEMY_WAIT):
             self.image = pg.transform.rotate(self.animation[self.animation_count], self.rot)
             self.rect = self.image.get_rect()
+            self.rect.center = self.pos
+            self.hitbox.center = self.pos
 
             self.hit()
-            self.rect.center = self.pos
             self.wait_count += 1
         else:
             if (self.animation_count < len(self.animation) - 1):
@@ -402,10 +404,11 @@ class Spawner(pg.sprite.Sprite):
     def spawn_enemies(self):
         self.enemies_spawned = 0
 
+        num_tries = 0
         while(self.enemies_spawned < self.cap):
             r1 = random.randint(-self.range, self.range)
             r2 = random.randint(-self.range, self.range)
-            spawn_pos = vec(r1,r2) + self.pos
+            spawn_pos = vec(r1,r2) + self.rect.center
 
             too_close = False
             for sprite in self.game.sprite_list:
@@ -414,10 +417,12 @@ class Spawner(pg.sprite.Sprite):
                     too_close = True
                     break
             if not too_close:
-                print(spawn_pos)
                 enemy = Enemy(self.game, (spawn_pos[0]), (spawn_pos[1]), ENEMY_HP)
                 self.enemies_spawned += 1
 
+            num_tries += 1
+            if num_tries > SPAWN_ATTEMPTS:
+                break
     def draw_health(self):
         if(self.hp > SPAWNER_HP * 0.6):
             color = GREEN
@@ -442,7 +447,8 @@ class Spawner(pg.sprite.Sprite):
         self.count += 1
         start = False
         if self.count >= self.delay:
-            start = True
+            if len(self.game.enemy_list) <= MAX_ENEMIES:
+                start = True
 
         if start:
             if self.count > self.rate - len(self.game.spawner_blast):
