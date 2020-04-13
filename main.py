@@ -19,19 +19,25 @@ class Game:
         game_folder = path.dirname(__file__)
         map_folder = path.join(game_folder, "maps")
         img_folder = path.join(game_folder, "images")
-        self.map = Map(path.join(map_folder, "map2.txt"))
+        self.map = Map(path.join(map_folder, "map3.txt"))
 
         self.player_img = pg.image.load(path.join(img_folder, "player.png"))
         self.empty_player_img = pg.image.load(path.join(img_folder, "player_transparent.png"))
-        self.enemy_img  = pg.image.load(path.join(img_folder, "enemy.png"))
+        self.enemy_img  = pg.image.load(path.join(img_folder, "2.png"))
         self.wall_img = pg.image.load(path.join(img_folder, "wall.png"))
-        self.floor_img = pg.image.load(path.join(img_folder, "floor.png"))
+        self.spawner_img = pg.image.load(path.join(img_folder, "spawner.png")).convert_alpha()
+
+        self.enemy_move = [pg.image.load("images/2.png"), pg.image.load("images/3.png"), pg.image.load("images/4.png"), pg.image.load("images/5.png"), pg.image.load("images/6.png"), pg.image.load("images/7.png"), pg.image.load("images/8.png"), pg.image.load("images/9.png"), pg.image.load("images/10.png"),
+                                pg.image.load("images/11.png"), pg.image.load("images/12.png"), pg.image.load("images/13.png"), pg.image.load("images/14.png"), pg.image.load("images/15.png"), pg.image.load("images/16.png"), pg.image.load("images/17.png"), pg.image.load("images/18.png"), pg.image.load("images/19.png"), pg.image.load("images/20.png"),
+                                pg.image.load("images/21.png"), pg.image.load("images/22.png"), pg.image.load("images/23.png"), pg.image.load("images/24.png"), pg.image.load("images/25.png"), pg.image.load("images/26.png")]
+        self.enemy_idle = [pg.image.load("images/2.png")]
 
     def new(self):
         self.sprite_list = pg.sprite.LayeredUpdates()
         self.bullet_list = pg.sprite.Group()
         self.wall_list = pg.sprite.Group()
         self.enemy_list = pg.sprite.Group()
+        self.spawner_list = pg.sprite.Group()
 
         for row, tiles in enumerate(self.map.data):
             for col, tile in enumerate(tiles):
@@ -41,6 +47,8 @@ class Game:
                     self.player = Player(self, col*TILE_SIZE, row*TILE_SIZE)
                 elif tile == "e":
                     enemy = Enemy(self, col*TILE_SIZE, row*TILE_SIZE, ENEMY_HP)
+                elif tile == "s":
+                    spawner = Spawner(self, col*TILE_SIZE, row*TILE_SIZE, SPAWNER_RATE, SPAWNER_CAP, SPAWNER_RANGE, SPAWNER_HP)
 
         self.camera = Camera(self.map.width, self.map.height)
 
@@ -64,6 +72,8 @@ class Game:
         self.screen.fill(BG_COLOR)
         #self.draw_grid()
         for sprite in self.sprite_list:
+            if isinstance(sprite, Spawner):
+                sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply(sprite))
         pg.display.flip()
 

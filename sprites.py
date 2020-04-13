@@ -4,7 +4,7 @@ from settings import *
 import random
 from pygame import Vector2 as vec
 
-##returns true if the given circle and rectangle are collided
+##returns true if the given circle object and rectangle.rect are collided by at least a buffer amount
 def circle_rect_collided(c, r, buffer):
     cx = c.pos.x
     cy = c.pos.y
@@ -199,6 +199,12 @@ class Bullet(pg.sprite.Sprite):
         if pg.sprite.spritecollideany(self, self.game.wall_list):
             self.kill()
 
+    def spawner_collision(self):
+        for spawner in self.game.spawner_list:
+            if pg.sprite.collide_rect(self, spawner):
+                spawner.hp -= self.damage
+                self.kill()
+
     def out_of_bounds(self):
         if(self.pos.x < 0 or self.pos.y < 0 or self.pos.x > self.game.map.width or self.pos.y > self.game.map.height):
             self.kill()
@@ -209,6 +215,7 @@ class Bullet(pg.sprite.Sprite):
         self.pos += self.vel * self.game.dt
         self.rect.center = self.pos
         self.wall_collision()
+        self.spawner_collision()
         self.out_of_bounds()
 
 class Wall(pg.sprite.Sprite):
@@ -263,9 +270,12 @@ class Enemy(pg.sprite.Sprite):
         self.hitbox = ENEMY_HITBOX
         self.hitbox.center = self.pos
 
+        self.animation = self.game.enemy_idle
+        self.animation_count = 0
+
     def move(self):
         self.rot = (self.game.player.pos - self.pos).angle_to(vec(1,0))
-        self.image = pg.transform.rotate(self.game.enemy_img, self.rot)
+        self.image = pg.transform.rotate(self.animation[self.animation_count], self.rot)
         self.rect = self.image.get_rect()
 
         self.acc = vec(1, 0).rotate(-self.rot)
@@ -311,16 +321,90 @@ class Enemy(pg.sprite.Sprite):
                 self.vel += bullet.vel * KNOCKBACK
                 if(self.chase == False):
                     self.chase = True
+                    self.animation = self.game.enemy_move
                 bullet.kill()
                 self.hp -= bullet.damage
                 if(self.hp < 1):
                     self.kill()
 
     def update(self):
-        if (self.game.player.pos - self.pos).length() < AGGRO_RADIUS:
+        if(self.animation_count < len(self.animation) - 1):
+            self.animation_count += 1
+        else:
+            self.animation_count = 0
+        self.image = pg.transform.rotate(self.animation[self.animation_count], self.rot)
+        self.rect = self.image.get_rect()
+        self.rect.center = self.pos
+
+        if ((self.chase == False) and ((self.game.player.pos - self.pos).length() < AGGRO_RADIUS)):
             self.chase = True
-        if(self.chase):
+            self.animation = self.game.enemy_move
+
+        if self.chase:
             self.move()
 
         self.hit()
         self.rect.center = self.pos
+
+class Spawner(pg.sprite.Sprite):
+    def __init__(self, game, x, y, rate, cap, range, hp):
+        self.groups = game.spawner_list, game.sprite_list
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.layer = WALL_LAYER
+        self.game = game
+
+        self.pos = vec(x + TILE_SIZE / 2, y + TILE_SIZE / 2)
+
+        self.image = self.game.spawner_img
+        self.rect = self.image.get_rect()
+        self.rect.center = self.pos
+        self.width = self.rect.width
+
+        self.rate = rate    ##how many seconds to pass between spawns
+        self.count = 0
+        self.cap = cap #zombies per spawn
+        self.range = range  ##radius of eligible spawn locations
+
+        self.hp = hp
+
+    def spawn_enemies(self):
+        self.enemies_spawned = 0
+
+        while(self.enemies_spawned < self.cap):
+            spawn_pos = vec(random.randint(-self.range, self.range), random.randint(-self.range, self.range))
+
+            for sprite in self.game.sprite_list:
+                too_close = False
+                dist = sprite.pos - spawn_pos
+                if(abs(dist.length()) < sprite.rect.width + self.width):
+                    too_close = True
+
+            if not too_close:
+                enemy = Enemy(self.game, (self.pos[0] + spawn_pos[0]), (self.pos[1] + spawn_pos[1]), ENEMY_HP)
+                self.enemies_spawned += 1
+
+    def draw_health(self):
+        if(self.hp > SPAWNER_HP * 0.6):
+            color = GREEN
+        elif self.hp > SPAWNER_HP * 0.3:
+            color = YELLOW
+        else:
+            color = RED
+
+        width = int(self.width * self.hp / SPAWNER_HP)
+        self.health_bar = pg.Rect(0, 0, width, 7)
+        self.health_bar.centerx, self.health_bar.centery = self.pos[0], self.pos[1] - self.rect.height/2
+        self.health_bar.centerx += self.game.camera.x
+        self.health_bar.centery += self.game.camera.y
+
+        if self.hp < SPAWNER_HP:
+            pg.draw.rect(self.game.screen, color, self.health_bar)
+
+    def update(self):
+        self.count += 1
+        if self.count > self.rate:
+            self.count = 0
+            self.spawn_enemies()
+
+        if self.hp <= 0:
+            self.kill()
