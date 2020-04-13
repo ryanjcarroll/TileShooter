@@ -417,7 +417,32 @@ class Spawner(pg.sprite.Sprite):
             start = True
 
         if start:
+            animation_count = 0
+            if self.count > self.rate - len(self.game.spawner_blast):
+                spawn_animation = Animation(self.game, self.rect.centerx, self.rect.centery, self.game.spawner_blast)
             if self.count > self.rate:
                 self.count = 0
                 self.spawn_enemies()
 
+class Animation(pg.sprite.Sprite):
+    def __init__(self, game, x, y, list):
+        self.groups = game.sprite_list
+        pg.sprite.Sprite.__init__(self, self.groups)
+
+        self.game = game
+        self.pos = vec(x,y)
+        self.list = list
+
+        self.image = self.list[0]
+        self.rect = self.image.get_rect()
+        self.rect.center = self.pos
+        self.current = 0
+
+    def update(self):
+        if self.current < len(self.list) - 1:
+            self.image = self.list[self.current]
+            self.rect = self.image.get_rect()
+            self.rect.center = self.pos
+            self.current += 1
+        else:
+            self.kill()

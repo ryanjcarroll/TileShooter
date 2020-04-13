@@ -19,6 +19,7 @@ class Game:
         game_folder = path.dirname(__file__)
         map_folder = path.join(game_folder, "maps")
         img_folder = path.join(game_folder, "images")
+        spawner_folder = path.join(img_folder, "spawner")
         self.map = Map(path.join(map_folder, "map5.txt"))
 
         self.player_img = pg.image.load(path.join(img_folder, "player.png"))
@@ -31,6 +32,9 @@ class Game:
                                 pg.image.load("images/11.png"), pg.image.load("images/12.png"), pg.image.load("images/13.png"), pg.image.load("images/14.png"), pg.image.load("images/15.png"), pg.image.load("images/16.png"), pg.image.load("images/17.png"), pg.image.load("images/18.png"), pg.image.load("images/19.png"), pg.image.load("images/20.png"),
                                 pg.image.load("images/21.png"), pg.image.load("images/22.png"), pg.image.load("images/23.png"), pg.image.load("images/24.png"), pg.image.load("images/25.png"), pg.image.load("images/26.png")]
         self.enemy_idle = [pg.image.load("images/2.png")]
+
+        self.spawner_blast = [pg.image.load(path.join(spawner_folder, "new_spawn1.png")), pg.image.load(path.join(spawner_folder, "new_spawn2.png")), pg.image.load(path.join(spawner_folder, "new_spawn3.png")), pg.image.load(path.join(spawner_folder, "new_spawn4.png")), pg.image.load(path.join(spawner_folder, "new_spawn5.png")), pg.image.load(path.join(spawner_folder, "new_spawn6.png")), pg.image.load(path.join(spawner_folder, "new_spawn7.png")),
+                           pg.image.load(path.join(spawner_folder, "new_spawn8.png")), pg.image.load(path.join(spawner_folder, "new_spawn9.png")), pg.image.load(path.join(spawner_folder, "new_spawn10.png")), pg.image.load(path.join(spawner_folder, "new_spawn11.png")), ]
 
     def new(self):
         self.sprite_list = pg.sprite.LayeredUpdates()
