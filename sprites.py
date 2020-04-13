@@ -87,6 +87,10 @@ class Player(pg.sprite.Sprite):
             if(circle_rect_collided(self, wall.rect, -5)):
                 b = True
                 break
+        for spawner in self.game.spawner_list:
+            if (circle_rect_collided(self, spawner.hitbox, -7)):
+                b = True
+                break
         return b
 
     def check_keys(self):
@@ -347,23 +351,26 @@ class Enemy(pg.sprite.Sprite):
         self.rect.center = self.pos
 
 class Spawner(pg.sprite.Sprite):
-    def __init__(self, game, x, y, rate, cap, range, hp):
+    def __init__(self, game, x, y, rate, cap, range, hp, delay):
         self.groups = game.spawner_list, game.sprite_list
         pg.sprite.Sprite.__init__(self, self.groups)
         self.layer = WALL_LAYER
         self.game = game
 
-        self.pos = vec(x + TILE_SIZE / 2, y + TILE_SIZE / 2)
+        self.pos = vec(x, y + TILE_SIZE)
 
         self.image = self.game.spawner_img
         self.rect = self.image.get_rect()
-        self.rect.center = self.pos
+        self.rect.bottomleft = self.pos
         self.width = self.rect.width
+        self.hitbox = SPAWNER_HITBOX
+        self.hitbox.center = self.rect.center
 
         self.rate = rate    ##how many seconds to pass between spawns
         self.count = 0
         self.cap = cap #zombies per spawn
         self.range = range  ##radius of eligible spawn locations
+        self.delay = delay ##ticks to wait until first spawn
 
         self.hp = hp
 
@@ -373,8 +380,8 @@ class Spawner(pg.sprite.Sprite):
         while(self.enemies_spawned < self.cap):
             spawn_pos = vec(random.randint(-self.range, self.range), random.randint(-self.range, self.range))
 
+            too_close = False
             for sprite in self.game.sprite_list:
-                too_close = False
                 dist = sprite.pos - spawn_pos
                 if(abs(dist.length()) < sprite.rect.width + self.width):
                     too_close = True
@@ -393,7 +400,7 @@ class Spawner(pg.sprite.Sprite):
 
         width = int(self.width * self.hp / SPAWNER_HP)
         self.health_bar = pg.Rect(0, 0, width, 7)
-        self.health_bar.centerx, self.health_bar.centery = self.pos[0], self.pos[1] - self.rect.height/2
+        self.health_bar.centerx, self.health_bar.centery = self.pos[0] + self.rect.width/2, self.pos[1] - self.rect.height
         self.health_bar.centerx += self.game.camera.x
         self.health_bar.centery += self.game.camera.y
 
@@ -401,10 +408,16 @@ class Spawner(pg.sprite.Sprite):
             pg.draw.rect(self.game.screen, color, self.health_bar)
 
     def update(self):
-        self.count += 1
-        if self.count > self.rate:
-            self.count = 0
-            self.spawn_enemies()
-
         if self.hp <= 0:
             self.kill()
+
+        self.count += 1
+        start = False
+        if self.count >= self.delay:
+            start = True
+
+        if start:
+            if self.count > self.rate:
+                self.count = 0
+                self.spawn_enemies()
+

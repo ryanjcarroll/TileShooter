@@ -19,7 +19,7 @@ class Game:
         game_folder = path.dirname(__file__)
         map_folder = path.join(game_folder, "maps")
         img_folder = path.join(game_folder, "images")
-        self.map = Map(path.join(map_folder, "map3.txt"))
+        self.map = Map(path.join(map_folder, "map5.txt"))
 
         self.player_img = pg.image.load(path.join(img_folder, "player.png"))
         self.empty_player_img = pg.image.load(path.join(img_folder, "player_transparent.png"))
@@ -48,7 +48,7 @@ class Game:
                 elif tile == "e":
                     enemy = Enemy(self, col*TILE_SIZE, row*TILE_SIZE, ENEMY_HP)
                 elif tile == "s":
-                    spawner = Spawner(self, col*TILE_SIZE, row*TILE_SIZE, SPAWNER_RATE, SPAWNER_CAP, SPAWNER_RANGE, SPAWNER_HP)
+                    spawner = Spawner(self, col*TILE_SIZE, row*TILE_SIZE, SPAWNER_RATE, SPAWNER_CAP, SPAWNER_RANGE, SPAWNER_HP, SPAWNER_DELAY)
 
         self.camera = Camera(self.map.width, self.map.height)
 
