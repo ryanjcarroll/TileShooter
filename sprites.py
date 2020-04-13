@@ -116,13 +116,19 @@ class Player(pg.sprite.Sprite):
             self.move(vx, 0)
             self.move(0, vy)
 
-    def update(self):
-        if not self.hit:
-            self.check_hit()
-            self.rotate()
-            self.check_keys()
+    def draw_health(self):
+        if self.hp > PLAYER_HP * 0.6:
+            color = GREEN
+        elif self.hp > PLAYER_HP * 0.3:
+            color = YELLOW
         else:
-            self.get_hit()
+            color = RED
+
+        width = int(PLAYER_HEALTHBAR_SIZE * self.hp / PLAYER_HP)
+        self.health_bar = pg.Rect(0, 0, width, 20)
+        self.health_bar.bottomleft = [32, (HEIGHT-32)]
+
+        pg.draw.rect(self.game.screen, color, self.health_bar)
 
     def check_hit(self):
         for enemy in self.game.enemy_list:
@@ -175,6 +181,16 @@ class Player(pg.sprite.Sprite):
         bullet_x = self.pos.x + 10 * cos(angle + 0.55)
         bullet_y = self.pos.y + 10 * sin(angle + 0.55)
         bullet = Bullet(self.game, bullet_x, bullet_y, angle)
+
+    def update(self):
+        if self.hp <= 0:
+            self.game.playing = False
+        if not self.hit:
+            self.check_hit()
+            self.rotate()
+            self.check_keys()
+        else:
+            self.get_hit()
 
 class Bullet(pg.sprite.Sprite):
     def __init__(self, game, x, y, angle):
@@ -274,6 +290,7 @@ class Enemy(pg.sprite.Sprite):
         self.hitbox = ENEMY_HITBOX
         self.hitbox.center = self.pos
 
+        self.wait_count = 0
         self.animation = self.game.enemy_idle
         self.animation_count = 0
 
@@ -332,23 +349,31 @@ class Enemy(pg.sprite.Sprite):
                     self.kill()
 
     def update(self):
-        if(self.animation_count < len(self.animation) - 1):
-            self.animation_count += 1
+        if(self.wait_count < ENEMY_WAIT):
+            self.image = pg.transform.rotate(self.animation[self.animation_count], self.rot)
+            self.rect = self.image.get_rect()
+
+            self.hit()
+            self.rect.center = self.pos
+            self.wait_count += 1
         else:
-            self.animation_count = 0
-        self.image = pg.transform.rotate(self.animation[self.animation_count], self.rot)
-        self.rect = self.image.get_rect()
-        self.rect.center = self.pos
+            if (self.animation_count < len(self.animation) - 1):
+                self.animation_count += 1
+            else:
+                self.animation_count = 0
+            self.image = pg.transform.rotate(self.animation[self.animation_count], self.rot)
+            self.rect = self.image.get_rect()
+            self.rect.center = self.pos
 
-        if ((self.chase == False) and ((self.game.player.pos - self.pos).length() < AGGRO_RADIUS)):
-            self.chase = True
-            self.animation = self.game.enemy_move
+            if ((self.chase == False) and ((self.game.player.pos - self.pos).length() < AGGRO_RADIUS)):
+                self.chase = True
+                self.animation = self.game.enemy_move
 
-        if self.chase:
-            self.move()
+            if self.chase:
+                self.move()
 
-        self.hit()
-        self.rect.center = self.pos
+            self.hit()
+            self.rect.center = self.pos
 
 class Spawner(pg.sprite.Sprite):
     def __init__(self, game, x, y, rate, cap, range, hp, delay):
@@ -378,16 +403,19 @@ class Spawner(pg.sprite.Sprite):
         self.enemies_spawned = 0
 
         while(self.enemies_spawned < self.cap):
-            spawn_pos = vec(random.randint(-self.range, self.range), random.randint(-self.range, self.range))
+            r1 = random.randint(-self.range, self.range)
+            r2 = random.randint(-self.range, self.range)
+            spawn_pos = vec(r1,r2) + self.pos
 
             too_close = False
             for sprite in self.game.sprite_list:
-                dist = sprite.pos - spawn_pos
-                if(abs(dist.length()) < sprite.rect.width + self.width):
+                dist = spawn_pos - sprite.pos
+                if abs(dist.length()) < SPAWNER_BUFFER:
                     too_close = True
-
+                    break
             if not too_close:
-                enemy = Enemy(self.game, (self.pos[0] + spawn_pos[0]), (self.pos[1] + spawn_pos[1]), ENEMY_HP)
+                print(spawn_pos)
+                enemy = Enemy(self.game, (spawn_pos[0]), (spawn_pos[1]), ENEMY_HP)
                 self.enemies_spawned += 1
 
     def draw_health(self):
@@ -417,7 +445,6 @@ class Spawner(pg.sprite.Sprite):
             start = True
 
         if start:
-            animation_count = 0
             if self.count > self.rate - len(self.game.spawner_blast):
                 spawn_animation = Animation(self.game, self.rect.centerx, self.rect.centery, self.game.spawner_blast)
             if self.count > self.rate:

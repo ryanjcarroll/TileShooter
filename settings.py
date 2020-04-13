@@ -23,19 +23,23 @@ FPS = 60
 ## player settings
 PLAYER_SPEED = 200
 PLAYER_HITBOX = Rect(0, 0, 15, 15)
+PLAYER_HEALTHBAR_SIZE = 64
+PLAYER_HP = 100
+PLAYER_HIT_TIME= 60 ##hit animation length, in frames
+PLAYER_RESPAWN_TIME = 60 ##invincibility after death, in frames
+
+##bullet settings
 BULLET_SPEED = 32
 BULLET_RANGE = 512
 BULLET_DAMAGE = 10
 KNOCKBACK = 0.1
-PLAYER_HP = 100
-PLAYER_HIT_TIME= 60 ##hit animation length, in frames
-PLAYER_RESPAWN_TIME = 60 ##invincibility after death, in frames
 
 ##enemy settings
 ENEMY_SPEED = 400
 ENEMY_HP = 40
 ENEMY_DAMAGE = 25
 ENEMY_HITBOX = Rect(0,0,15,15)
+ENEMY_WAIT = 60 ##frames to do nothing before chasing player
 AVOID_WALLS_RADIUS = 48
 AVOID_WALLS_WEIGHT = 1.5
 AVOID_ENEMIES_RADIUS = 48
@@ -56,3 +60,4 @@ SPAWNER_CAP = 3
 SPAWNER_RATE = 200
 SPAWNER_DELAY = 10
 SPAWNER_HITBOX = Rect(0,0,32,32)
+SPAWNER_BUFFER = 32 ##pixels to allow between a spawned enemy and nearby blocks

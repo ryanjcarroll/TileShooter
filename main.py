@@ -78,6 +78,8 @@ class Game:
         for sprite in self.sprite_list:
             if isinstance(sprite, Spawner):
                 sprite.draw_health()
+            if isinstance(sprite, Player):
+                sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply(sprite))
         pg.display.flip()
 
@@ -94,12 +96,15 @@ class Game:
             elif event.type == pg.MOUSEBUTTONDOWN:
                 if (event.button == 1):
                     self.player.shoot()
-                
-    def show_start_screen(self):
+
+    def start_screen(self):
+        pass
+
+    def game_over_screen(self):
         pass
 
 game = Game()
-game.show_start_screen()
+game.start_screen()
 while True:
     game.new()
     game.run()
