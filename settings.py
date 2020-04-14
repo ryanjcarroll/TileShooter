@@ -56,8 +56,8 @@ BULLET_LAYER = 4
 ##spawner settings
 SPAWNER_HP = 400
 SPAWNER_RANGE = 100
-SPAWNER_CAP = 3
-SPAWNER_RATE = 180
+SPAWNER_CAP = 4
+SPAWNER_RATE = 300
 SPAWNER_DELAY = 10
 SPAWNER_HITBOX = Rect(0,0,32,32)
 SPAWNER_BUFFER = 34 ##pixels to allow between a spawned enemy and nearby blocks

@@ -441,6 +441,7 @@ class Spawner(pg.sprite.Sprite):
             num_tries += 1
             if num_tries > SPAWN_ATTEMPTS:
                 break
+
     def draw_health(self):
         if(self.hp > SPAWNER_HP * 0.6):
             color = GREEN
