@@ -1,8 +1,8 @@
 import pygame as pg
 from settings import *
-from _utility import *
-import Enemy
-import Animation
+from ._utility import *
+from .Enemy import Enemy
+from .Animation import Animation
 import random
 from pygame import Vector2 as vec
 

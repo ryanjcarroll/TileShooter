@@ -1,9 +1,13 @@
 import pygame as pg
 from settings import *
-from sprites import *
 from map import *
 from os import path
 import sys
+
+from sprites.Wall import Wall
+from sprites.Player import Player
+from sprites.Spawner import Spawner
+from sprites.Enemy import Enemy
 pg.init()
 
 class Game:
@@ -80,6 +84,7 @@ class Game:
                 sprite.draw_health()
             if isinstance(sprite, Player):
                 sprite.draw_health()
+                sprite.draw_stamina()
             if isinstance(sprite, Enemy):
                 sprite.draw_health()
             self.screen.blit(sprite.image, self.camera.apply(sprite))

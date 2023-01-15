@@ -1,6 +1,6 @@
 import pygame as pg
 from settings import *
-from _utility import *
+from ._utility import *
 from pygame import Vector2 as vec
 import random
 

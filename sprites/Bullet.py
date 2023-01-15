@@ -1,6 +1,6 @@
 import pygame as pg
 from settings import *
-from _utility import *
+from ._utility import *
 from math import cos, sin
 from pygame import Vector2 as vec
 

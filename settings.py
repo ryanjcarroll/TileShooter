@@ -23,11 +23,15 @@ BG_COLOR = DARK_GREY
 FPS = 60
 
 ## player settings
-PLAYER_SPEED = 200
+PLAYER_SPEED = 150
+PLAYER_SPEED_STAMINA_MULTIPLIER = 1.6 # speed multiplier when stamina is active
 PLAYER_HITBOX = Rect(0, 0, 15, 15)
 PLAYER_HEALTHBAR_SIZE = 96
 PLAYER_HP = 100
 PLAYER_STAMINA = 100
+PLAYER_STAMINA_USE = 1 # how much stamina to use per frame
+PLAYER_STAMINA_REGEN = 1 # how much stamina to restore per frame (when active)
+PLAYER_STAMINA_REGEN_TIME = 150 # how long after using until stamina regens, in frames
 PLAYER_HIT_TIME= 60 ##hit animation length, in frames
 PLAYER_RESPAWN_TIME = 60 ##invincibility after death, in frames
 
@@ -59,10 +63,10 @@ BULLET_LAYER = 4
 ##spawner settings
 SPAWNER_HP = 400
 SPAWNER_RANGE = 100
-SPAWNER_CAP = 8
+SPAWNER_CAP = 4
 SPAWNER_RATE = 300
 SPAWNER_DELAY = 10
 SPAWNER_HITBOX = Rect(0,0,32,32)
 SPAWNER_BUFFER = 34 ##pixels to allow between a spawned enemy and nearby blocks
 SPAWN_ATTEMPTS = 50 ##maximum times the spawner will attempt to find valid locations each iteration
-MAX_ENEMIES = 80
+MAX_ENEMIES = 40

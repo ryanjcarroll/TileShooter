@@ -1,9 +1,9 @@
 import pygame as pg
 from math import atan2, degrees, cos, sin, sqrt
 from settings import *
-from _utility import *
+from ._utility import *
 from pygame import Vector2 as vec
-import Bullet
+from .Bullet import Bullet
 
 class Player(pg.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -27,6 +27,7 @@ class Player(pg.sprite.Sprite):
 
         self.hp = PLAYER_HP
         self.stamina = PLAYER_STAMINA
+        self.stamina_regen_count = 0 # frames since last stamina use
 
         self.hit_vel = vec(0,0)
         self.hit_count = 0
@@ -72,8 +73,10 @@ class Player(pg.sprite.Sprite):
     def check_keys(self):
         keys = pg.key.get_pressed()
         vel = PLAYER_SPEED
-        if keys[pg.K_LSHIFT]:
-            vel *= 1.5
+        if keys[pg.K_LSHIFT] and self.stamina > 2:
+            vel *= PLAYER_SPEED_STAMINA_MULTIPLIER
+            self.stamina -= PLAYER_STAMINA_USE
+            self.stamina_regen_count = 0
         vx,vy = 0, 0
 
         if keys[pg.K_a] or keys[pg.K_LEFT]:
@@ -167,6 +170,15 @@ class Player(pg.sprite.Sprite):
         bullet_y = self.pos.y + 10 * sin(angle + 0.55)
         bullet = Bullet(self.game, bullet_x, bullet_y, angle)
 
+    def regen_stamina(self):
+        self.stamina_regen_count += 1
+
+        # delayed stamina regen (up to the max player stamina level)
+        if self.stamina_regen_count >= PLAYER_STAMINA_REGEN_TIME and self.stamina < PLAYER_STAMINA:
+            self.stamina += PLAYER_STAMINA_REGEN
+            if self.stamina > PLAYER_STAMINA: # prevent stamina overload
+                self.stamina = PLAYER_STAMINA
+
     def update(self):
         if self.hp <= 0:
             self.game.playing = False
@@ -174,5 +186,6 @@ class Player(pg.sprite.Sprite):
             self.check_hit()
             self.rotate()
             self.check_keys()
+            self.regen_stamina()
         else:
             self.get_hit()
