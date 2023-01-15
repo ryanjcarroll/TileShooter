@@ -35,7 +35,7 @@ class Player(pg.sprite.Sprite):
     def __init__(self, game, x, y):
         self.groups = game.sprite_list
         pg.sprite.Sprite.__init__(self, self.groups)
-        self.layer = PLAYER_LAYER
+        game.sprite_list.change_layer(self, PLAYER_LAYER)
 
         self.pos = vec(x,y)
         self.vel = vec(0,0)
@@ -196,7 +196,7 @@ class Bullet(pg.sprite.Sprite):
     def __init__(self, game, x, y, angle):
         self.groups = game.bullet_list, game.sprite_list
         pg.sprite.Sprite.__init__(self, self.groups)
-        self.layer = BULLET_LAYER
+        game.sprite_list.change_layer(self, BULLET_LAYER)
 
         self.game = game
         self.angle = angle
@@ -242,7 +242,7 @@ class Wall(pg.sprite.Sprite):
     def __init__(self, game, x, y):
         self.groups = game.wall_list, game.sprite_list
         pg.sprite.Sprite.__init__(self, self.groups)
-        self.layer = WALL_LAYER
+        game.sprite_list.change_layer(self, WALL_LAYER)
 
         self.game = game
         self.image = self.game.wall_img
@@ -255,7 +255,7 @@ class Floor(pg.sprite.Sprite):
     def __init__(self, game, x, y):
         self.groups = game.sprite_list
         pg.sprite.Sprite.__init__(self, self.groups)
-        self.layer = WALL_LAYER
+        game.sprite_list.change_layer(self, WALL_LAYER)
 
         self.game = game
         self.image = self.game.floor_img
@@ -268,7 +268,7 @@ class Enemy(pg.sprite.Sprite):
     def __init__(self, game, x, y, hp):
         self.groups = game.enemy_list, game.sprite_list
         pg.sprite.Sprite.__init__(self, self.groups)
-        self.layer = ENEMY_LAYER
+        game.sprite_list.change_layer(self, ENEMY_LAYER)
 
         self.game = game
         self.rot = random.randint(0,360)
@@ -399,7 +399,7 @@ class Spawner(pg.sprite.Sprite):
     def __init__(self, game, x, y, rate, cap, range, hp, delay):
         self.groups = game.spawner_list, game.sprite_list
         pg.sprite.Sprite.__init__(self, self.groups)
-        self.layer = WALL_LAYER
+        game.sprite_list.change_layer(self, WALL_LAYER)
         self.game = game
 
         self.pos = vec(x, y + TILE_SIZE)
