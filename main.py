@@ -7,11 +7,16 @@ import sys
 from sprites.Wall import Wall
 from sprites.Player import Player
 from sprites.Spawner import Spawner
-from sprites.Enemy import Enemy
+from sprites.Enemies.Enemy import Enemy
+from sprites.Enemies.Zombie import Zombie
+from sprites.Enemies.Devil import Devil
 pg.init()
 
 class Game:
     def __init__(self):
+        """
+        Initialize game object and settings.
+        """
         pg.init()
         self.screen = pg.display.set_mode((WIDTH, HEIGHT))
         pg.display.set_caption(TITLE)
@@ -20,47 +25,61 @@ class Game:
         self.load_data()
         
     def load_data(self):
+        """
+        Set resource paths and load sprite images.
+        """
+        # set resource paths for game assets
         game_folder = path.dirname(__file__)
         map_folder = path.join(game_folder, "maps")
         img_folder = path.join(game_folder, "images")
         spawner_folder = path.join(img_folder, "spawner")
+
+        # set map file
         self.map = Map(path.join(map_folder, "map5.txt"))
 
+        # set sprites
         self.player_img = pg.image.load(path.join(img_folder, "player.png"))
         self.empty_player_img = pg.image.load(path.join(img_folder, "player_transparent.png"))
-        self.enemy_img  = pg.image.load(path.join(img_folder, "2.png"))
+        self.zombie_img  = pg.image.load(path.join(img_folder, "2.png"))
+        self.charger_img = pg.image.load(path.join(img_folder, "enemy.png"))
         self.wall_img = pg.image.load(path.join(img_folder, "wall.png"))
         self.spawner_img = pg.image.load(path.join(img_folder, "spawner.png")).convert_alpha()
 
-        self.enemy_move = [pg.image.load("images/2.png"), pg.image.load("images/3.png"), pg.image.load("images/4.png"), pg.image.load("images/5.png"), pg.image.load("images/6.png"), pg.image.load("images/7.png"), pg.image.load("images/8.png"), pg.image.load("images/9.png"), pg.image.load("images/10.png"),
-                                pg.image.load("images/11.png"), pg.image.load("images/12.png"), pg.image.load("images/13.png"), pg.image.load("images/14.png"), pg.image.load("images/15.png"), pg.image.load("images/16.png"), pg.image.load("images/17.png"), pg.image.load("images/18.png"), pg.image.load("images/19.png"), pg.image.load("images/20.png"),
-                                pg.image.load("images/21.png"), pg.image.load("images/22.png"), pg.image.load("images/23.png"), pg.image.load("images/24.png"), pg.image.load("images/25.png"), pg.image.load("images/26.png")]
-        self.enemy_idle = [pg.image.load("images/2.png")]
-
-        self.spawner_blast = [pg.image.load(path.join(spawner_folder, "new_spawn1.png")), pg.image.load(path.join(spawner_folder, "new_spawn2.png")), pg.image.load(path.join(spawner_folder, "new_spawn3.png")), pg.image.load(path.join(spawner_folder, "new_spawn4.png")), pg.image.load(path.join(spawner_folder, "new_spawn5.png")), pg.image.load(path.join(spawner_folder, "new_spawn6.png")), pg.image.load(path.join(spawner_folder, "new_spawn7.png")),
-                           pg.image.load(path.join(spawner_folder, "new_spawn8.png")), pg.image.load(path.join(spawner_folder, "new_spawn9.png")), pg.image.load(path.join(spawner_folder, "new_spawn10.png")), pg.image.load(path.join(spawner_folder, "new_spawn11.png")), ]
+        # set image lists for sprite animations
+        self.spawner_blast = [pg.image.load(path.join(spawner_folder, f"new_spawn{i}.png")) for i in range(1,12,1)]
 
     def new(self):
+        """
+        Create a new game by initializing sprite lists and loading game objects based on the mapfile.
+        """
+        # lists of objects for the game to render
         self.sprite_list = pg.sprite.LayeredUpdates()
         self.bullet_list = pg.sprite.Group()
         self.wall_list = pg.sprite.Group()
         self.enemy_list = pg.sprite.Group()
         self.spawner_list = pg.sprite.Group()
 
+        # load game objects based on the map file
         for row, tiles in enumerate(self.map.data):
             for col, tile in enumerate(tiles):
                 if tile == "w":
-                    wall = Wall(self, col*TILE_SIZE, row*TILE_SIZE)
+                    Wall(self, col*TILE_SIZE, row*TILE_SIZE)
                 elif tile == "p":
                     self.player = Player(self, col*TILE_SIZE, row*TILE_SIZE)
                 elif tile == "e":
-                    enemy = Enemy(self, col*TILE_SIZE, row*TILE_SIZE, ENEMY_HP)
+                    Zombie(self, col*TILE_SIZE, row*TILE_SIZE)
                 elif tile == "s":
-                    spawner = Spawner(self, col*TILE_SIZE, row*TILE_SIZE, SPAWNER_RATE, SPAWNER_CAP, SPAWNER_RANGE, SPAWNER_HP, SPAWNER_DELAY)
+                    Spawner(self, col*TILE_SIZE, row*TILE_SIZE, SPAWNER_RATE, SPAWNER_CAP, SPAWNER_RANGE, SPAWNER_HP, SPAWNER_DELAY)
+                elif tile == "c":
+                    Devil(self, col*TILE_SIZE, row*TILE_SIZE)
 
+        # initialize a camera object with the selected map dimensions
         self.camera = Camera(self.map.width, self.map.height)
 
     def run(self):
+        """
+        Main game loop.
+        """
         self.playing = True
         while(self.playing):
             self.dt = self.clock.tick(FPS) / 1000
@@ -69,14 +88,23 @@ class Game:
             self.draw()
             
     def quit(self):
+        """
+        End the game.
+        """
         pg.quit()
         sys.exit()
 
     def update(self):
+        """
+        Update sprites and camera.
+        """
         self.sprite_list.update()
         self.camera.update(self.player)
 
     def draw(self):
+        """
+        Draw screen background, sprites, health and stamina bars.
+        """
         self.screen.fill(BG_COLOR)
         #self.draw_grid()
         for sprite in self.sprite_list:
@@ -91,12 +119,18 @@ class Game:
         pg.display.flip()
 
     def draw_grid(self):
+        """
+        Utility/debugging method to draw gridlines over map assets.
+        """
         for x in range(0, WIDTH, TILE_SIZE):
             pg.draw.line(self.screen, LIGHT_GREY, (x, 0), (x, HEIGHT))
         for y in range(0, HEIGHT, TILE_SIZE):
             pg.draw.line(self.screen, LIGHT_GREY, (0, y), (WIDTH, y))
             
     def events(self):
+        """
+        Check for mouse events.
+        """
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.quit()
@@ -110,8 +144,8 @@ class Game:
     def game_over_screen(self):
         pass
 
+# initialize a game object and start running
 game = Game()
 game.start_screen()
-while True:
-    game.new()
-    game.run()
+game.new()
+game.run()

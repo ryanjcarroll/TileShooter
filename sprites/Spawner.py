@@ -1,7 +1,8 @@
 import pygame as pg
 from settings import *
 from ._utility import *
-from .Enemy import Enemy
+from .Enemies.Zombie import Zombie
+from .Enemies.Devil import Devil
 from .Animation import Animation
 import random
 from pygame import Vector2 as vec
@@ -46,7 +47,10 @@ class Spawner(pg.sprite.Sprite):
                     too_close = True
                     break
             if not too_close:
-                enemy = Enemy(self.game, (spawn_pos[0]), (spawn_pos[1]), ENEMY_HP)
+                if random.randint(0,2) == 0:
+                    Devil(self.game, (spawn_pos[0]), (spawn_pos[1]))
+                else:
+                    Zombie(self.game, (spawn_pos[0]), (spawn_pos[1]))
                 self.enemies_spawned += 1
 
             num_tries += 1

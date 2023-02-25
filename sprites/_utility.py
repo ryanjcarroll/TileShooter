@@ -1,8 +1,14 @@
 from math import sqrt
 from settings import *
 
-##returns true if the given circle object and rectangle.rect are collided by at least a buffer amount
 def circle_rect_collided(c, r, buffer):
+    """
+    Returns true if the given circle object and rectangle.rect are collided by at least a buffer amount. Returns false otherwise.
+
+    c       : circle to check.
+    r       : rectangle to check.
+    buffer  : amount of overlap to require.
+    """
     cx = c.pos.x
     cy = c.pos.y
     rx = r.x
